@@ -9,31 +9,35 @@
 
 <section >
   <h1>HAR Visualizer</h1>
-  <p>Takes a <a href="https://en.wikipedia.org/wiki/.har">HAR</a> file content and displays a pie chart with the related information.</p>
+  <p>Takes a <a href="https://en.wikipedia.org/wiki/.har">HAR</a> file content and aggregates timing and size information. No data will be send to the Server all stays in your browser.</p>
 </section>
 
 <section id="mainBox">
   <script id="template" type="text/x-handlebars-template">
-    <h3>{{domains.length}} domains where requested</h3>
-
     <div class="row">
       <div class="col-md-6" id="chart"></div>
       <div  class="col-md-6">
         <table class="table table-striped">
           <thead>
-          <tr class="sorting">
-            <th><a href="#name">name</a></th>
-            <th><a href="#time">time (ms)</a></th>
-            <th><a href="#requests">requests</a></th>
-            <th><a href="#size">size (byte)</a></th>
-          </tr>
+            <tr class="sorting">
+              <th><a href="#name">name</a></th>
+              <th><a href="#time">time &sum;</a></th>
+              <th><a href="#requests">requests</a></th>
+              <th><a href="#size">size</a></th>
+            </tr>
+            <tr class="sorting">
+              <th>{{domains.length}} domains</th>
+              <th>{{formatTime summedDate.time}}</th>
+              <th>{{summedDate.requests}}</th>
+              <th>{{formatByte summedDate.size}}</th>
+            </tr>
           </thead>
           {{#each domains}}
           <tr>
             <td>{{name}}</td>
-            <td>{{time}}</td>
+            <td>{{formatTime time}}</td>
             <td>{{requests}}</td>
-            <td>{{size}}</td>
+            <td>{{formatByte size}}</td>
           </tr>
           {{/each}}
         </table>
@@ -62,6 +66,7 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.3.0/handlebars.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/numeral.js/1.5.3/numeral.min.js"></script>
 <script src='https://www.google.com/jsapi?autoload={"modules":[{"name":"visualization","version":"1","packages":["corechart","table"]}]}'></script>
 <script src="main.js"></script>
 

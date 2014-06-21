@@ -1,10 +1,44 @@
+(function numeralSetup() {
+  numeral.language('de', {
+    delimiters: {
+      thousands: '.',
+      decimal: ','
+    },
+    abbreviations: {
+      thousand: 'k',
+      million: 'm',
+      billion: 'b',
+      trillion: 't'
+    },
+    ordinal: function (number) {
+      return '.';
+    },
+    currency: {
+      symbol: '€'
+    }
+  });
+
+  if (navigator.language === "de") {
+    numeral.language("de");
+  }
+}());
+
 $(function () {
   var compiledTemplate = Handlebars.compile($("#template").html()),
     $mainBox = $("#mainBox"),
     $harInput = $("#harInput"),
-    defaultType = "time",
+    defaultType = "size",
     sorting,
-    domains = [];
+    summedDate,
+    domains;
+
+  Handlebars.registerHelper('formatByte', function(value) {
+    return numeral(value).format('0 b');
+  });
+
+  Handlebars.registerHelper('formatTime', function(value) {
+    return numeral(value).format("0,0") + " ms";
+  });
 
   function mapEntries(pageHar) {
     return pageHar.log.entries.map(function (entry) {
@@ -14,7 +48,7 @@ $(function () {
       return {
         pathname: entryUrl.pathname,
         name: entryUrl.hostname,
-        size: entry.response.content.size,
+        size: entry.response.bodySize + entry.response.headersSize,
         type: entry.response.content.mimeType,
         time: entry.time
       };
@@ -56,22 +90,23 @@ $(function () {
   function add(currentDomain, entry) {
     if (currentDomain) {
       currentDomain.requests++;
-      currentDomain.origTime = currentDomain.origTime + entry.time;
+      currentDomain.origTime = (currentDomain.origTime + entry.time);
       currentDomain.time = round(currentDomain.origTime + entry.time);
-      currentDomain.size += entry.size;
+      currentDomain.size += (entry.size || 0);
     } else {
       domains.push({
         name: entry.name,
         requests: 1,
         origTime: entry.time,
         time: round(entry.time),
-        size: entry.size
+        size: (entry.size || 0)
       });
     }
   }
 
   function renderTable() {
     $mainBox.html(compiledTemplate({
+      summedDate: summedDate,
       domains: domains
     }));
 
@@ -109,9 +144,36 @@ $(function () {
     });
   }
 
-  function readHar() {
-    var pageHar, entries;
+  function sumNumbers() {
+    _.each(domains, function (domain) {
+      _.each(domain, function (attr, name) {
+        if (typeof attr === "number" && attr !== undefined) {
+          if (!summedDate[name]) {
+            summedDate[name] = 0;
+          }
+          summedDate[name] += attr;
+        }
+      });
+    });
+  }
 
+  function fillDomains(pageHar) {
+    var entries;
+
+    domains = [];
+    summedDate = {};
+    entries = mapEntries(pageHar);
+    _.each(entries, function (entry) {
+      var currentDomain = _.find(domains, function (domain) {
+        return domain.name === entry.name;
+      });
+
+      add(currentDomain, entry);
+    });
+  }
+
+  function readHar() {
+    var pageHar;
 
     pageHar = $harInput.val();
 
@@ -122,16 +184,8 @@ $(function () {
       return;
     }
 
-    domains = [];
-    entries = mapEntries(pageHar);
-    entries.forEach(function (entry) {
-      var currentDomain = _.find(domains, function (domain) {
-        return domain.name === entry.name;
-      });
-
-      add(currentDomain, entry);
-    });
-
+    fillDomains(pageHar);
+    sumNumbers();
     sortByAttr(defaultType, true);
     renderTable();
     renderChart(defaultType);
