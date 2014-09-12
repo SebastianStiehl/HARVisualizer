@@ -92,14 +92,14 @@ $(function () {
       currentDomain.requests++;
       currentDomain.origTime = (currentDomain.origTime + entry.time);
       currentDomain.time = round(currentDomain.origTime + entry.time);
-      currentDomain.size += (entry.size || 0);
+      currentDomain.size += (entry.size > 0 ? entry.size :  0);
     } else {
       domains.push({
         name: entry.name,
         requests: 1,
         origTime: entry.time,
         time: round(entry.time),
-        size: (entry.size || 0)
+        size: ((entry.size && entry.size > 0) ? entry.size : 0)
       });
     }
   }
